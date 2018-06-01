@@ -1,0 +1,37 @@
+package sample.Player;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.util.Scanner;
+
+public class Player implements Runnable {
+    private Socket socket;
+    private ObjectOutputStream outputStream;
+    private ObjectInputStream inputStream;
+
+    public Player(){
+        try {
+            socket = new Socket("localhost", 9090);
+            outputStream = new ObjectOutputStream(socket.getOutputStream());
+            inputStream = new ObjectInputStream(socket.getInputStream());
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void run() {
+            try(Socket s = new Socket("localhost", 9090);
+                Scanner in = new Scanner(s.getInputStream(), "UTF-8")){
+
+                while(in.hasNextLine()){
+                    String line = in.nextLine();
+                }
+
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+    }
+}
