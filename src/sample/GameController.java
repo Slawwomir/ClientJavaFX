@@ -1,6 +1,8 @@
 package sample;
 
+import javafx.scene.input.KeyEvent;
 import sample.Player.Player;
+import sample.Player.PlayerProperties;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -15,10 +17,10 @@ public class GameController implements Runnable {
 
     public GameController(InetAddress host, int port){
         own = new Player();
+        friend = new Player();
         try {
             socket = new Socket(host, port);
             outputStream = new ObjectOutputStream(socket.getOutputStream());
-            inputStream = new ObjectInputStream(socket.getInputStream());
         }catch (IOException e){
             e.printStackTrace();
         }
@@ -26,13 +28,34 @@ public class GameController implements Runnable {
 
     @Override
     public void run() {
+        try {
+            outputStream.writeObject(own.getProperties());
+            inputStream = new ObjectInputStream(socket.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         while(true){
             try {
-                friend = (Player) inputStream.readObject();
+                //friend.update((PlayerProperties) inputStream.readObject());
+                PlayerProperties test = (PlayerProperties) inputStream.readObject();
+                friend.update(test);
+                outputStream.writeObject(own.getProperties());
             } catch (ClassNotFoundException | IOException e){
                 e.printStackTrace();
                 break;
             }
+        }
+    }
+
+    public void move(KeyEvent event){
+        switch(event.getCode()){
+
+            case UP: own.getCharacter().setY(own.getCharacter().getY()-1); break;
+            case DOWN: own.getCharacter().setY(own.getCharacter().getY()+1); break;
+            case LEFT: own.getCharacter().setX(own.getCharacter().getX()-1); break;
+            case RIGHT: own.getCharacter().setX(own.getCharacter().getX()+1); break;
+
         }
     }
 
