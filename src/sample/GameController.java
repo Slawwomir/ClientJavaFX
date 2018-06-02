@@ -37,9 +37,9 @@ public class GameController implements Runnable {
 
         while(true){
             try {
-                //friend.update((PlayerProperties) inputStream.readObject());
-                PlayerProperties test = (PlayerProperties) inputStream.readObject();
-                friend.update(test);
+                friend.update((PlayerProperties) inputStream.readObject());
+                //PlayerProperties test = (PlayerProperties) inputStream.readObject();
+                //friend.update(test);
                 outputStream.writeObject(own.getProperties());
             } catch (ClassNotFoundException | IOException e){
                 e.printStackTrace();
