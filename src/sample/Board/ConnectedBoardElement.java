@@ -9,9 +9,9 @@ public class ConnectedBoardElement extends BoardElement implements Usable {
     private boolean reversible;
     private boolean deactivated;    // preventing endless loop
 
-    public ConnectedBoardElement(double posX, double posY, String imagePath, boolean used, boolean reversible,
+    public ConnectedBoardElement(double posX, double posY, double elementSize, String imagePath, boolean permeable, boolean used, boolean reversible,
                                  BoardElement... connectedWith){
-        super(posX, posY, imagePath);
+        super(posX, posY, elementSize, imagePath, permeable);
         this.used = used;
         this.reversible = reversible;
         this.connectedWith = Arrays.asList(connectedWith);
