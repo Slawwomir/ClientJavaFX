@@ -1,5 +1,6 @@
 package sample;
 
+import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
@@ -22,21 +23,47 @@ public class ViewController {
     private Player own;
     private GameController gameController;
     private Board board;
+    private AnimationTimer timer;
+    private final static double delta = 0.015;
 
     @FXML
     public void initialize() throws UnknownHostException {
         createBoard();
-
         gameController = new GameController(InetAddress.getByName("localhost"), 9090, board);
         new Thread(gameController).start();
         mainPane.getChildren().addAll(gameController.getOwn().getCharacter(), gameController.getFriend().getCharacter());
+        gameController.getOwn().getCharacter().toFront();
+        gameController.getFriend().getCharacter().toFront();
         mainPane.requestFocus();
         mainPane.setFocusTraversable(true);
+
+        timer = new AnimationTimer()
+        {
+            private long last = 0;
+            @Override
+            public void handle(long now)
+            {
+                if(now - last > 10_000_000) {
+                    gameController.move(delta);
+                    gameController.getOwn().updateFromGUI();
+                    gameController.getFriend().updateFromGUI();
+                    last = now;
+                }
+            }
+        };
+
+        timer.start();
     }
 
     @FXML
     private void keyPressedHandler(KeyEvent event){
-        gameController.move(event);
+        //gameController.move(event);
+        gameController.keyPressed(event);
+    }
+
+    @FXML
+    private void keyReleasedHandler(KeyEvent event){
+        gameController.keyReleased(event);
     }
 
     private void createBoard(){

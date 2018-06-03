@@ -14,7 +14,7 @@ public class BoardElement {
     private String imagePath;
     private ImageView imageView;
 
-    public BoardElement(double iX, double iY, double elementSize, String imagePath, boolean permeable) {
+    public BoardElement(double iY, double iX, double elementSize, String imagePath, boolean permeable) {
         this.posX = iX*elementSize;
         this.posY = iY*elementSize;
         this.elementSize = elementSize;
