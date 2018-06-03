@@ -27,7 +27,7 @@ public class ViewController {
     public void initialize() throws UnknownHostException {
         createBoard();
 
-        gameController = new GameController(InetAddress.getByName("localhost"), 9090);
+        gameController = new GameController(InetAddress.getByName("localhost"), 9090, board);
         new Thread(gameController).start();
         mainPane.getChildren().addAll(gameController.getOwn().getCharacter(), gameController.getFriend().getCharacter());
         mainPane.requestFocus();

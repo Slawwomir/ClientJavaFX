@@ -1,12 +1,16 @@
 package sample;
 
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import sample.Board.Board;
+import sample.Board.BoardElement;
 import sample.Player.Player;
 import sample.Player.PlayerProperties;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.List;
 
 public class GameController implements Runnable {
     private Socket socket;
@@ -14,8 +18,10 @@ public class GameController implements Runnable {
     private ObjectOutputStream outputStream;
     private Player friend;
     private Player own;
+    private Board board;
 
-    public GameController(InetAddress host, int port){
+    public GameController(InetAddress host, int port, Board board){
+        this.board = board;
         own = new Player();
         friend = new Player();
         try {
@@ -38,8 +44,6 @@ public class GameController implements Runnable {
         while(true){
             try {
                 friend.update((PlayerProperties) inputStream.readObject());
-                //PlayerProperties test = (PlayerProperties) inputStream.readObject();
-                //friend.update(test);
                 outputStream.writeObject(own.getProperties());
             } catch (ClassNotFoundException | IOException e){
                 e.printStackTrace();
@@ -49,13 +53,27 @@ public class GameController implements Runnable {
     }
 
     public void move(KeyEvent event){
-        switch(event.getCode()){
+        double prevX = own.getX();
+        double prevY = own.getY();
+        makeMove(event.getCode());
+        List<BoardElement> elementsCoveredByPlayer = board.getElementsCoveredByPlayer(own);
+        for (BoardElement element : elementsCoveredByPlayer) {
+            if(!element.isPermeable()){
+                //undo move
+                //makeMove(new KeyCode((event.getCode().getCode() - 23) % 4 + 25, "Undo"));
+                own.setX(prevX);
+                own.setY(prevY);
+                break;
+            }
+        }
+    }
 
-            case UP: own.getCharacter().setY(own.getCharacter().getY()-1); break;
-            case DOWN: own.getCharacter().setY(own.getCharacter().getY()+1); break;
-            case LEFT: own.getCharacter().setX(own.getCharacter().getX()-1); break;
-            case RIGHT: own.getCharacter().setX(own.getCharacter().getX()+1); break;
-
+    public void makeMove(KeyCode code){
+        switch(code){
+            case UP: own.setY(own.getY()-1); break;
+            case DOWN: own.setY(own.getY()+1); break;
+            case LEFT: own.setX(own.getX()-1); break;
+            case RIGHT: own.setX(own.getX()+1); break;
         }
     }
 
