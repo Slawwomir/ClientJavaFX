@@ -11,10 +11,8 @@ public class Player {
     private ImageView character;
     private Position position;
     private double size;
-    private double maxSpeed; //pixels per second
 
     public Player(){
-        maxSpeed = 200;
         size = 34;
         position = new Position(size+1, size+1);
         character = new ImageView(

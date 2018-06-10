@@ -2,11 +2,13 @@ package sample.Board;
 
 import sample.Player.Player;
 
+import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.lang.reflect.Array;
+import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Board {
@@ -16,26 +18,55 @@ public class Board {
     public Board(String fileName){
         elementSize = 35;
 
+        List<Tuple<ConnectedBoardElement, Point>> connections = new ArrayList<>();
+
         try(BufferedReader bf = new BufferedReader(new FileReader(fileName))){
             String line = bf.readLine();
             elements = new BoardElement[line.length()][line.length()];
-            int i = 0, j = 0;
+            int i = 0;
             while(line != null) {
-                for(char x : line.toCharArray()){
-                    switch(x) {
+                for(int k = 0, j = 0; k < line.length(); k++)
+                {
+                    char c = line.charAt(k);
+                    switch(c) {
                         case 'w':   // wall
                             elements[i][j] = new BoardElement(i, j, elementSize,
                                     "file:platformer-pack-medieval/PNG/medievalTile_064.png", false); break;
                         case 'f':   // floor
                             elements[i][j] = new BoardElement(i, j, elementSize,
                                     "file:platformer-pack-medieval/PNG/medievalTile_263.png", true); break;
+                        case 'c':{  //connected with
+                            String xe = line.substring(k+2, k+line.substring(k+1).indexOf(']') + 1);
+                            String[] st = xe.split("\\|");
+                            int y = Integer.parseInt(st[0]);
+                            int x = Integer.parseInt(st[1]);
+                            ConnectedBoardElement el = new ConnectedBoardElement(i, j, elementSize,
+                                    "file:platformer-pack-medieval/PNG/medievalTile_031.png",
+                                    "file:platformer-pack-medieval/PNG/medievalTile_031.png",
+                                    true, false, true, true);
+                            elements[i][j] = el;
+                            connections.add(new Tuple<>(el, new Point(x, y)));
+                            k+= xe.length() + 2;
+                        } break;
+
+                        case 'o':{
+                            elements[i][j] = new ConnectedBoardElement(i, j, elementSize,
+                                    "file:platformer-pack-medieval/PNG/medievalTile_101.png",
+                                    "file:platformer-pack-medieval/PNG/medievalTile_102.png",
+                                    true, false, true, false); break;
+                        }
+
                     }
                     j++;
                 }
-                j = 0;
                 i++;
                 line = bf.readLine();
             }
+
+            for(Tuple<ConnectedBoardElement, Point> pair : connections){
+                pair.x.addConnection(elements[pair.y.y][pair.y.x]);
+            }
+
         } catch (IOException e){
             e.printStackTrace();
         }
@@ -73,3 +104,4 @@ public class Board {
         }
     }
 }
+

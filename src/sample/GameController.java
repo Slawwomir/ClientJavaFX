@@ -5,6 +5,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import sample.Board.Board;
 import sample.Board.BoardElement;
+import sample.Board.Usable;
 import sample.Player.Player;
 import sample.Player.PlayerProperties;
 
@@ -34,6 +35,7 @@ public class GameController implements Runnable {
     private boolean downPressed;
     private boolean rightPressed;
     private boolean leftPressed;
+    private boolean usePressed;
     private double speed;
 
     public GameController(InetAddress host, int port, Board board){
@@ -97,6 +99,8 @@ public class GameController implements Runnable {
                 own.setY(prevY);
                 break;
             }
+            //if(element instanceof Usable && usePressed)
+            //    ((Usable) element).use();
         }
     }
 
@@ -106,6 +110,13 @@ public class GameController implements Runnable {
             case DOWN: downPressed = true; break;
             case LEFT: leftPressed = true; break;
             case RIGHT: rightPressed = true; break;
+            case E: usePressed = true;
+            List<BoardElement> elementsCoveredByPlayer = board.getElementsCoveredByPlayer(own);
+            for (BoardElement element : elementsCoveredByPlayer) {
+                if (element instanceof Usable && usePressed)
+                    ((Usable) element).useDirectly();
+            }
+            break;
         }
     }
 
@@ -115,6 +126,7 @@ public class GameController implements Runnable {
             case DOWN: downPressed = false; break;
             case LEFT: leftPressed = false; break;
             case RIGHT: rightPressed = false; break;
+            case E: usePressed = false; break;
         }
     }
 

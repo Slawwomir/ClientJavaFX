@@ -1,5 +1,6 @@
 package sample.Board;
 
+import javafx.application.Platform;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
@@ -13,6 +14,7 @@ public class BoardElement {
 
     private String imagePath;
     private ImageView imageView;
+
 
     public BoardElement(double iY, double iX, double elementSize, String imagePath, boolean permeable) {
         this.posX = iX*elementSize;
@@ -60,5 +62,9 @@ public class BoardElement {
 
     public ImageView getImageView() {
         return imageView;
+    }
+
+    public void changeImageView(String imagePath){
+        Platform.runLater(()-> imageView.setImage(new Image(imagePath)));
     }
 }

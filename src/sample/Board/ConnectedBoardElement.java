@@ -1,21 +1,26 @@
 package sample.Board;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class ConnectedBoardElement extends BoardElement implements Usable {
     private List<BoardElement> connectedWith;
     private boolean used;
     private boolean reversible;
     private boolean deactivated;    // preventing endless loop
+    private boolean availableDirectly;
+    private String pathUsed;
+    private String pathNotUsed;
 
-    public ConnectedBoardElement(double posX, double posY, double elementSize, String imagePath, boolean permeable, boolean used, boolean reversible,
-                                 BoardElement... connectedWith){
-        super(posX, posY, elementSize, imagePath, permeable);
+    public ConnectedBoardElement(double posY, double posX, double elementSize, String imagePath, String imagePathUsed,
+                                 boolean permeable, boolean used, boolean reversible, boolean availableDirectly){
+        super(posY, posX, elementSize, imagePath, permeable);
         this.used = used;
+        this.pathNotUsed = imagePath;
+        this.pathUsed = imagePathUsed;
         this.reversible = reversible;
-        this.connectedWith = Arrays.asList(connectedWith);
+        this.connectedWith = new ArrayList<>();
         this.deactivated = false;
+        this.availableDirectly = availableDirectly;
     }
 
     public boolean isUsed(){
@@ -32,7 +37,19 @@ public class ConnectedBoardElement extends BoardElement implements Usable {
             deactivated = false;
         }
 
-        used = !reversible || !used;
+        if(used = !reversible || !used){
+            this.changeImageView(pathUsed);
+        }else {
+            this.changeImageView(pathNotUsed);
+        }
     }
 
+    public void useDirectly(){
+        if(availableDirectly)
+            use();
+    }
+
+    public void addConnection(BoardElement connected){
+        connectedWith.add(connected);
+    }
 }
