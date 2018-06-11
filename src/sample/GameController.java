@@ -22,6 +22,7 @@ public class GameController implements Runnable {
     private Player friend;
     private Player own;
     private Board board;
+    private GameState gameState;
 
     private boolean connected;
     /*
@@ -56,10 +57,15 @@ public class GameController implements Runnable {
     @Override
     public void run() {
         try {
-            outputStream.writeObject(own.getProperties());
             inputStream = new ObjectInputStream(socket.getInputStream());
+            PlayerProperties initialMe = (PlayerProperties) inputStream.readObject();
+            own.update(initialMe);
+            PlayerProperties initialFriend = (PlayerProperties) inputStream.readObject();
+            friend.update(initialFriend);
+            gameState = (GameState) inputStream.readObject();
+            //outputStream.writeObject(own.getProperties());
             connected = true;
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             connected = false;
             e.printStackTrace();
         }
@@ -70,8 +76,20 @@ public class GameController implements Runnable {
         while(true){
             if(connected)
                 try {
-                    friend.update((PlayerProperties) inputStream.readObject());
+                /*
+                    PlayerProperties f = (PlayerProperties) inputStream.readObject();
+                    friend.update(f);
                     outputStream.writeObject(own.getProperties());
+                    PlayerProperties me = own.getProperties();
+                    //System.out.println(". wysylam " + me.x + "." + me.y + " | Odbieram " + f.x + "." + f.y);
+                */
+                GameState state = (GameState) inputStream.readObject();
+                gameState.update(state);
+                gameState.getPlayersProperties().get(own.getId()).update(own.getProperties());
+                friend.update(gameState.getPlayersProperties().get(friend.getId()));
+                GameState out = new GameState(gameState);
+                outputStream.writeObject(out);
+
                 } catch (ClassNotFoundException | IOException e){
                     e.printStackTrace();
                     break;

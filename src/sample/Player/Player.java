@@ -11,6 +11,7 @@ public class Player {
     private ImageView character;
     private Position position;
     private double size;
+    private int id;
 
     public Player(){
         size = 34;
@@ -25,6 +26,7 @@ public class Player {
 
     public void update(PlayerProperties younger){
         position = new Position(younger.x, younger.y);
+        id = younger.id;
         //Move to GUI!
         //character.setX(younger.x);
         //character.setY(younger.y);
@@ -33,6 +35,10 @@ public class Player {
 
     public ImageView getCharacter() {
         return character;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public Position getPosition() {
