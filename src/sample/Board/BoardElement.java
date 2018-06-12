@@ -11,18 +11,22 @@ public class BoardElement {
     private double posY;
     private boolean permeable;
     private double elementSize;
+    private char sign;
+    private int delayTime;
 
     private String imagePath;
     private ImageView imageView;
 
 
-    public BoardElement(double iY, double iX, double elementSize, String imagePath, boolean permeable) {
+    public BoardElement(double iY, double iX, double elementSize, String imagePath, boolean permeable, char sign) {
         this.posX = iX*elementSize;
         this.posY = iY*elementSize;
         this.elementSize = elementSize;
         this.imagePath = imagePath;
         this.permeable = permeable;
         this.imageView = new ImageView(new Image(imagePath));
+        this.sign = sign;
+        this.delayTime = -1;
         imageView.relocate(posX, posY);
         imageView.setFitHeight(elementSize);
         imageView.setFitWidth(elementSize);
@@ -66,5 +70,17 @@ public class BoardElement {
 
     public void changeImageView(String imagePath){
         Platform.runLater(()-> imageView.setImage(new Image(imagePath)));
+    }
+
+    public char getSign(){
+        return sign;
+    }
+
+    public int getDelayTime() {
+        return delayTime;
+    }
+
+    public void setDelayTime(int delayTime) {
+        this.delayTime = delayTime;
     }
 }

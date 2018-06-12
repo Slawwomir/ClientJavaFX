@@ -3,17 +3,19 @@ package sample;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import sample.Board.Board;
-import sample.Board.BoardElement;
-import sample.Board.Usable;
+import sample.Board.*;
 import sample.Player.Player;
 import sample.Player.PlayerProperties;
 
+import java.awt.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 public class GameController implements Runnable {
     private Socket socket;
@@ -23,6 +25,7 @@ public class GameController implements Runnable {
     private Player own;
     private Board board;
     private GameState gameState;
+    private Point changed;
 
     private boolean connected;
     /*
@@ -63,6 +66,7 @@ public class GameController implements Runnable {
             PlayerProperties initialFriend = (PlayerProperties) inputStream.readObject();
             friend.update(initialFriend);
             gameState = (GameState) inputStream.readObject();
+            board.setProperties(gameState.getBoardProperties());
             //outputStream.writeObject(own.getProperties());
             connected = true;
         } catch (IOException | ClassNotFoundException e) {
@@ -76,19 +80,52 @@ public class GameController implements Runnable {
         while(true){
             if(connected)
                 try {
-                /*
-                    PlayerProperties f = (PlayerProperties) inputStream.readObject();
-                    friend.update(f);
-                    outputStream.writeObject(own.getProperties());
-                    PlayerProperties me = own.getProperties();
-                    //System.out.println(". wysylam " + me.x + "." + me.y + " | Odbieram " + f.x + "." + f.y);
-                */
-                GameState state = (GameState) inputStream.readObject();
-                gameState.update(state);
-                gameState.getPlayersProperties().get(own.getId()).update(own.getProperties());
-                friend.update(gameState.getPlayersProperties().get(friend.getId()));
-                GameState out = new GameState(gameState);
-                outputStream.writeObject(out);
+
+                    GameState out = new GameState(gameState);
+                    outputStream.writeObject(out);
+                    gameState.setChangesInElements(false);
+                    GameState state = (GameState) inputStream.readObject();
+                    gameState.update(state);
+                    gameState.getPlayersProperties().get(own.getId()).update(own.getProperties());
+                ////////////////////////////////////////
+                    BoardProperties myProperties = board.getBoardProperties();
+                    BoardProperties gameProperties = state.getBoardProperties();
+                    boolean ownChange = false;
+                    boolean propEquals = myProperties.equals(gameProperties);
+                    if(!propEquals && own.didAction()){
+                        //wyślij moje na serwer
+                        ownChange = true;
+                        gameState.setBoardProperties(myProperties);
+                        gameState.setChangesInElements(true);
+                        BoardElement us = board.getElementsArray()[changed.y][changed.x];
+                        if(us instanceof ConnectedBoardElement) {
+                            List<BoardElement> connection = ((ConnectedBoardElement) us).getConnectedWith();
+                            List<Point> points = new ArrayList<>();
+                            for(BoardElement c : connection)
+                                points.add(new Point((int)(c.getPosX()/board.getElementSize()), ((int)(c.getPosY()/board.getElementSize()))));
+                            gameState.setChanged(points);
+                        }
+
+                        gameState.setChanged(Collections.singletonList(changed));
+                        own.doAction(false);
+                    }
+
+                    if (!propEquals && board.isElementChanged()){
+                        ownChange = true;
+                        gameState.setBoardProperties(myProperties);
+                        gameState.setChanged(board.getChangedElements());
+                        gameState.setChangesInElements(true);
+                        board.clearChangedElements();
+                        board.setElementChanged(false);
+                    }
+
+                    if (!propEquals && !ownChange){
+                        //zapisz
+                        board.setProperties(gameProperties);
+                        gameState.setBoardProperties(gameProperties);
+                    }
+                //////////////////////////////////
+                    friend.update(gameState.getPlayersProperties().get(friend.getId()));
 
                 } catch (ClassNotFoundException | IOException e){
                     e.printStackTrace();
@@ -131,8 +168,12 @@ public class GameController implements Runnable {
             case E: usePressed = true;
             List<BoardElement> elementsCoveredByPlayer = board.getElementsCoveredByPlayer(own);
             for (BoardElement element : elementsCoveredByPlayer) {
-                if (element instanceof Usable && usePressed)
+                if (element instanceof Usable && usePressed) {
+                    changed = new Point((int)(element.getPosX()/board.getElementSize()),
+                            (int)(element.getPosY()/board.getElementSize()));
                     ((Usable) element).useDirectly();
+                    own.doAction(true);
+                }
             }
             break;
         }

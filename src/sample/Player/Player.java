@@ -10,10 +10,21 @@ import java.io.Serializable;
 public class Player {
     private ImageView character;
     private Position position;
+    private boolean action;
     private double size;
     private int id;
 
+    public boolean didAction() {
+        return action;
+    }
+
+    public void doAction(boolean action) {
+        this.action = action;
+    }
+
     public Player(){
+        action = false;
+
         size = 34;
         position = new Position(size+1, size+1);
         character = new ImageView(

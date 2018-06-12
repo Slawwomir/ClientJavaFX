@@ -29,7 +29,7 @@ public class ViewController {
     @FXML
     public void initialize() throws UnknownHostException {
         createBoard();
-        gameController = new GameController(InetAddress.getByName("localhost"), 9090, board);
+        gameController = new GameController(InetAddress.getByName("localhost"), 9191, board);
         new Thread(gameController).start();
         mainPane.getChildren().addAll(gameController.getOwn().getCharacter(), gameController.getFriend().getCharacter());
         gameController.getOwn().getCharacter().toFront();
@@ -47,6 +47,8 @@ public class ViewController {
                     gameController.move(delta);
                     gameController.getOwn().updateFromGUI();
                     gameController.getFriend().updateFromGUI();
+                    if(board.isInitialized())
+                        board.refreshWater(0.1);
                     last = now;
                 }
             }
@@ -70,6 +72,8 @@ public class ViewController {
         board = new Board("map.txt");
         mainPane.getChildren().addAll(board.getElements().stream().
                 map(BoardElement::getImageView).collect(Collectors.toList()));
+
+        mainPane.getChildren().addAll(board.getAdditional());
     }
 
 }
