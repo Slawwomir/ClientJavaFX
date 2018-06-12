@@ -86,6 +86,7 @@ public class GameController implements Runnable {
                     gameState.setChangesInElements(false);
                     GameState state = (GameState) inputStream.readObject();
                     gameState.update(state);
+                    board.refreshWater(gameState.getWaterLevel());
                     gameState.getPlayersProperties().get(own.getId()).update(own.getProperties());
                 ////////////////////////////////////////
                     BoardProperties myProperties = board.getBoardProperties();

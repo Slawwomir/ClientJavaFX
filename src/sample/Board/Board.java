@@ -47,7 +47,7 @@ public class Board {
                             elements[i][j].setDelayTime(0);
                             break;
                         case 'x':
-                            Rectangle water = new Rectangle(elementSize, (i+1)*elementSize, (boardSize-2)*elementSize, elementSize);
+                            Rectangle water = new Rectangle(elementSize, (i+1)*elementSize, (boardSize-5)/2*elementSize, elementSize);
                             water.setFill(javafx.scene.paint.Color.rgb(0, 191, 255, 0.3));
                             additional.add(water);
                         case 'f':   // floor
@@ -143,7 +143,7 @@ public class Board {
                     used = true;
             }
             elementProperties[(int)(element.getPosY()/elementSize)][(int)(element.getPosX()/elementSize)]
-                    = new BoardElementProperties(element.isPermeable(), used, element.getDelayTime());
+                    = new BoardElementProperties(element.isPermeable(), used, element.getDelayTime(), element.getSign());
         }
 
         BoardProperties properties = new BoardProperties(elementProperties);
@@ -184,26 +184,22 @@ public class Board {
         return additional;
     }
 
-    public synchronized void refreshWater(double delta){
-        double dzeta = delta;
-        if(connections.get(0).x.isUsed())
-            dzeta -= delta;
-        if(connections.get(1).x.isUsed())
-            dzeta -= delta;
+    public synchronized void refreshWater(double value){
+        Rectangle r = additional.get(0);
 
-        for ( Rectangle r : additional){
-            r.setHeight(r.getHeight() + dzeta);
-            r.setY(r.getY() - dzeta);
+        Platform.runLater(() -> {
+            r.setHeight(value);
+            r.setY(elementSize * (elements.length/2 - 1) - value);
+        });
 
-            if(r.getY() > 0 && r.getY() < elementSize*(boardSize-1)) {
+        if(r.getY() > 0 && r.getY() < elementSize*(boardSize-1)) {
 
-                for (BoardElement element : elements[(int) (r.getY() + elementSize / 2) / elementSize]){
-                    if(element.getSign() == 'd' && !((ConnectedBoardElement)element).isUsed()){
-                        elementChanged = true;
-                        ((Usable) element).use();
-                        element.setPermeable(true);
-                        changedElements.add(new Point((int)(element.getPosX()/elementSize),(int) (r.getY() + elementSize / 2) / elementSize));
-                    }
+            for (BoardElement element : elements[(int) (r.getY() + elementSize / 2) / elementSize]){
+                if(element.getSign() == 'd' && !((ConnectedBoardElement)element).isUsed()){
+                    elementChanged = true;
+                    ((Usable) element).use();
+                    element.setPermeable(true);
+                    changedElements.add(new Point((int)(element.getPosX()/elementSize),(int) (r.getY() + elementSize / 2) / elementSize));
                 }
             }
         }

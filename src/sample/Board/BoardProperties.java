@@ -9,12 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BoardProperties implements Serializable {
-    private int elementSize= 35;
+    private int elementSize = 35;
     private BoardElementProperties[][] elements;
     private List<Point> playersPositions;
 
     public BoardProperties() {
         playersPositions = new ArrayList<>();
+
         try (
                 BufferedReader bf = new BufferedReader(new FileReader("map.txt")))
         {
@@ -25,22 +26,29 @@ public class BoardProperties implements Serializable {
                 for (int k = 0, j = 0; k < line.length(); k++) {
                     char c = line.charAt(k);
                     switch (c) {
+                        case 'd':
                         case 'w':   // wall
-                            elements[i][j] = new BoardElementProperties(false, false);
+                            elements[i][j] = new BoardElementProperties(false, false, c);
                             break;
                         case 'p':
                             playersPositions.add(new Point(i, j));
+                            elements[i][j] = new BoardElementProperties(true, false, c);
+                            break;
+                        case 't':
+                            elements[i][j] = new BoardElementProperties(true, false, 0, c);
+                            break;
                         case 'x':
                             //waterLevel = (i+1)*elementSize;
                         case 'o':
                         case 'f':   // floor
-                            elements[i][j] = new BoardElementProperties(true, false);
+                            elements[i][j] = new BoardElementProperties(true, false, c);
                             break;
-                        case 'c':  //connected with
-                            elements[i][j] = new BoardElementProperties(true, false);
+                        case 'c': {  //connected with
+                            elements[i][j] = new BoardElementProperties(true, false, c);
                             String xe = line.substring(k+2, k+line.substring(k+1).indexOf(']') + 1);
                             k += xe.length() + 2;
-                            break;
+                        }
+                        break;
                     }
                     j++;
                 }
@@ -73,9 +81,8 @@ public class BoardProperties implements Serializable {
             BoardProperties prop = (BoardProperties) obj;
             for(int i = 0; i < prop.elements.length; i++){
                 for(int j = 0; j < prop.elements[i].length; j++){
-                    if(!(elements[i][j].isPermeable() == prop.elements[i][j].isPermeable() &&
-                            elements[i][j].isUsed() == prop.elements[i][j].isUsed() &&
-                            elements[i][j].getDelayTime() == prop.elements[i][j].getDelayTime()))
+                    if(!(elements[i][j].isPermeable() && prop.elements[i][j].isPermeable() &&
+                            elements[i][j].isUsed() && prop.elements[i][j].isUsed()))
                         return false;
                 }
             }

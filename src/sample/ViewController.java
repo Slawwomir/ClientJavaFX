@@ -47,8 +47,8 @@ public class ViewController {
                     gameController.move(delta);
                     gameController.getOwn().updateFromGUI();
                     gameController.getFriend().updateFromGUI();
-                    if(board.isInitialized())
-                        board.refreshWater(0.1);
+                    //if(board.isInitialized())
+                    //    board.refreshWater(0.1);
                     last = now;
                 }
             }

@@ -6,23 +6,27 @@ public class BoardElementProperties implements Serializable {
     private boolean permeable;
     private boolean used;
     private int delayTime;
+    private char sign;
 
-    public BoardElementProperties(boolean permeable, boolean used) {
+    public BoardElementProperties(boolean permeable, boolean used, char sign) {
         this.permeable = permeable;
         this.used = used;
         this.delayTime = -1;
+        this.sign = sign;
     }
 
-    public BoardElementProperties(boolean permeable, boolean used, int delayTime) {
+    public BoardElementProperties(boolean permeable, boolean used, int delayTime, char sign) {
         this.permeable = permeable;
         this.used = used;
         this.delayTime = delayTime;
+        this.sign = sign;
     }
 
     public BoardElementProperties(BoardElementProperties elementProperties) {
         this.permeable = elementProperties.permeable;
         this.used = elementProperties.used;
         this.delayTime = elementProperties.delayTime;
+        this.sign = elementProperties.sign;
     }
 
     public boolean isPermeable() {
@@ -47,5 +51,9 @@ public class BoardElementProperties implements Serializable {
 
     public synchronized void setDelayTime(int delayTime) {
         this.delayTime = delayTime;
+    }
+
+    public char getSign() {
+        return sign;
     }
 }
