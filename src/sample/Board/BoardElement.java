@@ -32,11 +32,11 @@ public class BoardElement {
         imageView.setFitWidth(elementSize);
     }
 
-    public double getPosX() {
+    public synchronized double getPosX() {
         return posX;
     }
 
-    public double getPosY() {
+    public synchronized double getPosY() {
         return posY;
     }
 
@@ -56,11 +56,11 @@ public class BoardElement {
         this.imagePath = imagePath;
     }
 
-    public void setPermeable(boolean permeable){
+    public synchronized void setPermeable(boolean permeable){
         this.permeable = permeable;
     }
 
-    public boolean isPermeable(){
+    public synchronized boolean isPermeable(){
         return  permeable;
     }
 
@@ -80,7 +80,7 @@ public class BoardElement {
         return delayTime;
     }
 
-    public void setDelayTime(int delayTime) {
+    public synchronized void setDelayTime(int delayTime) {
         this.delayTime = delayTime;
     }
 }

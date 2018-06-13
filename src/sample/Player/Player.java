@@ -11,31 +11,40 @@ public class Player {
     private ImageView character;
     private Position position;
     private boolean action;
+    private boolean move;
     private double size;
     private int id;
 
-    public boolean didAction() {
+    public synchronized boolean didMove() {
+        return move;
+    }
+
+    public synchronized void setMove(boolean move) {
+        this.move = move;
+    }
+
+    public synchronized boolean didAction() {
         return action;
     }
 
-    public void doAction(boolean action) {
+    public synchronized void doAction(boolean action) {
         this.action = action;
     }
 
     public Player(){
         action = false;
 
-        size = 34;
+        size = 32;
         position = new Position(size+1, size+1);
         character = new ImageView(
                 new Image("http://icons.iconarchive.com/icons/custom-icon-design/flatastic-6/72/Circle-icon.png",
-                        size, size, false, false));
+                        35, 35, false, false));
         character.setX(size+1);
         character.setY(size+1);
         character.toFront();
     }
 
-    public void update(PlayerProperties younger){
+    public synchronized void update(PlayerProperties younger){
         position = new Position(younger.x, younger.y);
         id = younger.id;
         //Move to GUI!

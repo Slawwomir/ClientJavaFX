@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import static sample.GameController.playerLock;
+
 public class GameController implements Runnable {
     private Socket socket;
     private ObjectInputStream inputStream;
@@ -26,6 +28,8 @@ public class GameController implements Runnable {
     private Board board;
     private GameState gameState;
     private Point changed;
+
+    public static final Object playerLock = new Object();
 
     private boolean connected;
     /*
@@ -41,6 +45,7 @@ public class GameController implements Runnable {
     private boolean leftPressed;
     private boolean usePressed;
     private double speed;
+    private Thread readThread;
 
     public GameController(InetAddress host, int port, Board board){
         this.board = board;
@@ -76,6 +81,73 @@ public class GameController implements Runnable {
 
         double delta;
         double actualTime = System.currentTimeMillis();
+
+        //write
+
+        readThread = new Thread(new Read(this));
+        readThread.start();
+
+        try {
+            while (connected) {
+                //if are any changes in game
+                if (own.didAction() || own.didMove() || board.isElementChanged()) {
+                    synchronized (playerLock){
+                        own.setMove(false);
+                        BoardProperties myProperties = board.getBoardProperties();
+                        gameState.setBoardProperties(myProperties);
+                        gameState.getPlayersProperties().get(own.getId()).update(own.getProperties());
+
+                        if (own.didAction()) {
+                            own.doAction(false);
+                            gameState.setChangesInElements(true);
+                            BoardElement us = board.getElementsArray()[changed.y][changed.x];
+                            if (us instanceof ConnectedBoardElement) {
+                                List<BoardElement> connection = ((ConnectedBoardElement) us).getConnectedWith();
+                                List<Point> points = new ArrayList<>();
+                                for (BoardElement c : connection)
+                                    points.add(new Point((int) (c.getPosX() / board.getElementSize()), ((int) (c.getPosY() / board.getElementSize()))));
+                                gameState.setChanged(points);
+                            }
+                            gameState.setChanged(Collections.singletonList(changed));
+                        }
+
+                        if (board.isElementChanged()){
+                            gameState.setBoardProperties(board.getBoardProperties());
+                            gameState.setChanged(board.getChangedElements());
+                            gameState.setChangesInElements(true);
+                            board.clearChangedElements();
+                            board.setElementChanged(false);
+                        }
+
+                        GameState out = new GameState(gameState);
+                        outputStream.writeObject(out);
+
+                        gameState.setChangesInElements(false);
+                        playerLock.notifyAll();
+                    }
+                }
+            }
+                // It's all
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        /*
+        //read
+        new Thread(() -> {
+            if(connected)
+                try {
+                    while (connected) {
+                        GameState state = (GameState) inputStream.readObject();
+                        gameState.update(state);
+                        gameState.setBoardProperties(state.getBoardProperties());
+                        board.refreshWater(gameState.getWaterLevel());
+                        board.setProperties(state.getBoardProperties());
+                        friend.update(gameState.getPlayersProperties().get(friend.getId()));
+                    }
+                } catch(IOException | ClassNotFoundException e){
+                    e.printStackTrace();
+                }
+        }).start();
 
         while(true){
             if(connected)
@@ -133,31 +205,47 @@ public class GameController implements Runnable {
                     break;
                 }
         }
+*/
     }
 
     public void move(double delta){
         double prevX = own.getX();
         double prevY = own.getY();
+        boolean didMove = false;
 
-        if(upPressed)
-            own.setY(own.getY() - delta*speed);
-        if(downPressed)
-            own.setY(own.getY() + delta*speed);
-        if(rightPressed)
-            own.setX(own.getX() + delta*speed);
-        if(leftPressed)
-            own.setX(own.getX() - delta*speed);
-
-        List<BoardElement> elementsCoveredByPlayer = board.getElementsCoveredByPlayer(own);
-        for (BoardElement element : elementsCoveredByPlayer) {
-            if(!element.isPermeable()){
-                own.setX(prevX);
-                own.setY(prevY);
-                break;
+            if (upPressed) {
+                didMove = true;
+                own.setY(own.getY() - delta * speed);
             }
-            //if(element instanceof Usable && usePressed)
-            //    ((Usable) element).use();
-        }
+            if (downPressed) {
+                didMove = true;
+                own.setY(own.getY() + delta * speed);
+            }
+
+            if (rightPressed) {
+                didMove = true;
+                own.setX(own.getX() + delta * speed);
+            }
+            if (leftPressed) {
+                didMove = true;
+                own.setX(own.getX() - delta * speed);
+            }
+
+
+            List<BoardElement> elementsCoveredByPlayer = board.getElementsCoveredByPlayer(own);
+            for (BoardElement element : elementsCoveredByPlayer) {
+                if (!element.isPermeable()) {
+                    own.setX(prevX);
+                    own.setY(prevY);
+                    didMove = false;
+                    break;
+                }
+                //if(element instanceof Usable && usePressed)
+                //    ((Usable) element).use();
+            }
+
+            own.setMove(didMove);
+
     }
 
     public void keyPressed(KeyEvent event){
@@ -207,11 +295,60 @@ public class GameController implements Runnable {
         return outputStream;
     }
 
-    public Player getFriend() {
+    public synchronized Player getFriend() {
         return friend;
     }
 
-    public Player getOwn() {
+    public synchronized Player getOwn() {
         return own;
+    }
+
+    public synchronized GameState getGameState() {
+        return gameState;
+    }
+
+    public synchronized boolean isConnected() {
+        return connected;
+    }
+
+    public synchronized Board getBoard() {
+        return board;
+    }
+}
+
+class Read implements Runnable{
+    private GameController gameController;
+    private ObjectInputStream inputStream;
+
+    Read(GameController gameController){
+        this.gameController = gameController;
+        this.inputStream = gameController.getInputStream();
+    }
+
+    @Override
+    public void run() {
+        GameState state;
+        GameState myState;
+        Board board;
+        try {
+            while (true) {
+                state = (GameState) inputStream.readObject();
+                synchronized (playerLock) {
+                    myState = gameController.getGameState();
+                    board = gameController.getBoard();
+                    myState.update(state);
+                    if(!board.isElementChanged()) {
+                        myState.setBoardProperties(state.getBoardProperties());
+                        board.setProperties(state.getBoardProperties());
+                    }
+
+                    board.refreshWater(state.getWaterLevel());
+                    gameController.getFriend().update(state.getPlayersProperties().get(gameController.getFriend().getId()));
+                    playerLock.notifyAll();
+                }
+            }
+        } catch(IOException | ClassNotFoundException e){
+            e.printStackTrace();
+        }
     }
 }

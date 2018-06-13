@@ -47,7 +47,7 @@ public class Board {
                             elements[i][j].setDelayTime(0);
                             break;
                         case 'x':
-                            Rectangle water = new Rectangle(elementSize, (i+1)*elementSize, (boardSize-5)/2*elementSize, elementSize);
+                            Rectangle water = new Rectangle(elementSize, (i+1)*elementSize, (boardSize-4)/2*elementSize, elementSize);
                             water.setFill(javafx.scene.paint.Color.rgb(0, 191, 255, 0.3));
                             additional.add(water);
                         case 'f':   // floor

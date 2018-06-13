@@ -47,6 +47,16 @@ public class ViewController {
                     gameController.move(delta);
                     gameController.getOwn().updateFromGUI();
                     gameController.getFriend().updateFromGUI();
+
+                    if(gameController.getOwn().getX() >= board.getBoardSize()*board.getElementSize()/2)
+                        mainPane.setTranslateX(-board.getBoardSize()*board.getElementSize()/2);
+                    else
+                        mainPane.setTranslateX(0);
+
+                    if(gameController.getOwn().getY() >= board.getBoardSize()*board.getElementSize()/2)
+                        mainPane.setTranslateY(-board.getBoardSize()*board.getElementSize()/2);
+                    else
+                        mainPane.setTranslateY(0);
                     //if(board.isInitialized())
                     //    board.refreshWater(0.1);
                     last = now;
