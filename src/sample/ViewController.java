@@ -1,9 +1,15 @@
 package sample;
 
 import javafx.animation.AnimationTimer;
+import javafx.event.Event;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import sample.Board.Board;
 import sample.Board.BoardElement;
@@ -19,16 +25,30 @@ public class ViewController {
 
     @FXML
     private Pane mainPane;
+    @FXML
+    private TextArea chatBox;
+    @FXML
+    private Button sendButton;
+    @FXML
+    private TextField inputText;
+
     private ImageView character;
     private Player own;
     private GameController gameController;
     private Board board;
     private AnimationTimer timer;
-    private final static double delta = 0.015;
+    private boolean focusRequired;
+
+    private final Object lock = new Object();
+
+    private final static double delta = 0.02;
+
+
 
     @FXML
     public void initialize() throws UnknownHostException {
         createBoard();
+        focusRequired = false;
         gameController = new GameController(InetAddress.getByName("localhost"), 9191, board);
         new Thread(gameController).start();
         mainPane.getChildren().addAll(gameController.getOwn().getCharacter(), gameController.getFriend().getCharacter());
@@ -36,6 +56,7 @@ public class ViewController {
         gameController.getFriend().getCharacter().toFront();
         mainPane.requestFocus();
         mainPane.setFocusTraversable(true);
+        chatBox.setEditable(false);
 
         timer = new AnimationTimer()
         {
@@ -44,6 +65,13 @@ public class ViewController {
             public void handle(long now)
             {
                 if(now - last > 10_000_000) {
+
+                    synchronized (lock) {
+                        if (focusRequired && !mainPane.isFocused())
+                            mainPane.requestFocus();
+                        lock.notify();
+                    }
+
                     gameController.move(delta);
                     gameController.getOwn().updateFromGUI();
                     gameController.getFriend().updateFromGUI();
@@ -57,6 +85,12 @@ public class ViewController {
                         mainPane.setTranslateY(-board.getBoardSize()*board.getElementSize()/2);
                     else
                         mainPane.setTranslateY(0);
+
+                    String message = gameController.getMessage();
+                    gameController.clearMessage();
+                    if(message != null && !message.isEmpty()){
+                        addMessageChatBox(message);
+                    }
                     //if(board.isInitialized())
                     //    board.refreshWater(0.1);
                     last = now;
@@ -65,17 +99,54 @@ public class ViewController {
         };
 
         timer.start();
+
+        mainPane.requestFocus();
+        mainPane.setFocusTraversable(true);
     }
 
     @FXML
     private void keyPressedHandler(KeyEvent event){
-        //gameController.move(event);
         gameController.keyPressed(event);
     }
 
     @FXML
     private void keyReleasedHandler(KeyEvent event){
         gameController.keyReleased(event);
+    }
+
+    @FXML
+    private void clickMainPaneHandler(MouseEvent event){
+        synchronized (lock) {
+            focusRequired = true;
+        }
+    }
+
+    @FXML
+    private void clickChatBoxInput(MouseEvent event){
+        synchronized (lock) {
+            focusRequired = false;
+            inputText.requestFocus();
+        }
+    }
+
+    @FXML
+    private void sendButtonClick(Event event){
+        gameController.sendMessage(inputText.getText());
+        chatBox.appendText("Me: " + inputText.getText() + "\n");
+        inputText.clear();
+    }
+
+    @FXML
+    private void textFieldKeyPressed(KeyEvent event){
+        if(event.getCode() == KeyCode.ENTER){
+            gameController.sendMessage(inputText.getText());
+            chatBox.appendText("Me: " + inputText.getText() + "\n");
+            inputText.clear();
+        }
+    }
+
+    public void addMessageChatBox(String message){
+        chatBox.appendText("Friend: " + message + "\n");
     }
 
     private void createBoard(){
@@ -85,5 +156,7 @@ public class ViewController {
 
         mainPane.getChildren().addAll(board.getAdditional());
     }
+
+
 
 }

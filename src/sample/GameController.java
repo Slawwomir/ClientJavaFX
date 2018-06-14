@@ -29,6 +29,8 @@ public class GameController implements Runnable {
     private GameState gameState;
     private Point changed;
 
+    private String message;
+
     public static final Object playerLock = new Object();
 
     private boolean connected;
@@ -45,7 +47,9 @@ public class GameController implements Runnable {
     private boolean leftPressed;
     private boolean usePressed;
     private double speed;
+
     private Thread readThread;
+
 
     public GameController(InetAddress host, int port, Board board){
         this.board = board;
@@ -90,15 +94,14 @@ public class GameController implements Runnable {
         try {
             while (connected) {
                 //if are any changes in game
-                if (own.didAction() || own.didMove() || board.isElementChanged()) {
+                if (own.didAction() || own.didMove() || board.isElementChanged() || (gameState.getMessage(own.getId()) != null && !gameState.getMessage(own.getId()).isEmpty())) {
                     synchronized (playerLock){
                         own.setMove(false);
                         BoardProperties myProperties = board.getBoardProperties();
                         gameState.setBoardProperties(myProperties);
                         gameState.getPlayersProperties().get(own.getId()).update(own.getProperties());
-
+                        gameState.setChangesInElements(false);
                         if (own.didAction()) {
-                            own.doAction(false);
                             gameState.setChangesInElements(true);
                             BoardElement us = board.getElementsArray()[changed.y][changed.x];
                             if (us instanceof ConnectedBoardElement) {
@@ -121,7 +124,10 @@ public class GameController implements Runnable {
 
                         GameState out = new GameState(gameState);
                         outputStream.writeObject(out);
-
+                        if(own.didAction())
+                            own.doAction(false);
+                        gameState.setMessage(null, own.getId());
+                        message = null;
                         gameState.setChangesInElements(false);
                         playerLock.notifyAll();
                     }
@@ -260,8 +266,10 @@ public class GameController implements Runnable {
                 if (element instanceof Usable && usePressed) {
                     changed = new Point((int)(element.getPosX()/board.getElementSize()),
                             (int)(element.getPosY()/board.getElementSize()));
-                    ((Usable) element).useDirectly();
-                    own.doAction(true);
+                    synchronized (playerLock) {
+                        ((Usable) element).useDirectly();
+                        own.doAction(true);
+                    }
                 }
             }
             break;
@@ -314,6 +322,22 @@ public class GameController implements Runnable {
     public synchronized Board getBoard() {
         return board;
     }
+
+    public void sendMessage(String message){
+        gameState.setMessage(message, own.getId());
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void clearMessage() {
+        message = null;
+    }
 }
 
 class Read implements Runnable{
@@ -337,9 +361,14 @@ class Read implements Runnable{
                     myState = gameController.getGameState();
                     board = gameController.getBoard();
                     myState.update(state);
-                    if(!board.isElementChanged()) {
+                    if (!board.isElementChanged() && !gameController.getOwn().didAction()) {
                         myState.setBoardProperties(state.getBoardProperties());
                         board.setProperties(state.getBoardProperties());
+                    }
+
+                    String message = state.getMessage(gameController.getOwn().getId()^1);
+                    if (message != null && !message.isEmpty()) {
+                        gameController.setMessage(message);
                     }
 
                     board.refreshWater(state.getWaterLevel());
@@ -347,7 +376,7 @@ class Read implements Runnable{
                     playerLock.notifyAll();
                 }
             }
-        } catch(IOException | ClassNotFoundException e){
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

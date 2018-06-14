@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
@@ -8,4 +10,31 @@
 <?import javafx.scene.control.Label?>
 
 
-<Pane fx:id="mainPane" focusTraversable="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onKeyPressed="#keyPressedHandler" onKeyReleased="#keyReleasedHandler" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.ViewController" />
+<Pane focusTraversable="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="455.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.ViewController">
+   <children>
+      <SplitPane dividerPositions="0.8104089219330854" orientation="VERTICAL" prefHeight="600.0" prefWidth="455.0">
+        <items>
+          <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="0.0" minWidth="0.0" prefHeight="455.0" prefWidth="455.0">
+               <children>
+                  <Pane fx:id="mainPane" onKeyPressed="#keyPressedHandler" onKeyReleased="#keyReleasedHandler" onMouseClicked="#clickMainPaneHandler" prefHeight="455.0" prefWidth="455.0" />
+               </children>
+            </AnchorPane>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
+               <children>
+                  <VBox prefHeight="135.0" prefWidth="453.0">
+                     <children>
+                        <TextArea fx:id="chatBox" prefHeight="119.0" prefWidth="455.0" />
+                        <SplitPane dividerPositions="0.5" prefHeight="33.0" prefWidth="453.0">
+                           <items>
+                              <TextField fx:id="inputText" onKeyPressed="#textFieldKeyPressed" onMouseClicked="#clickChatBoxInput" prefHeight="31.0" prefWidth="379.0" />
+                              <Button fx:id="sendButton" mnemonicParsing="false" onAction="#sendButtonClick" text="Send" />
+                           </items>
+                        </SplitPane>
+                     </children>
+                  </VBox>
+               </children>
+            </AnchorPane>
+        </items>
+      </SplitPane>
+   </children>
+</Pane>
